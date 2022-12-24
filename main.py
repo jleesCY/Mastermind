@@ -131,25 +131,25 @@ def play():
 
     if verify:
         verify = False
-        correct_place = 0
-        correct_peg = 0
         counted = [-1,-1,-1,-1]
+        guess_counted = [-1,-1,-1,-1]
         for i in range(4):
             if patterns[round][i] == pattern[i]:
-                if counted[i] == -1:
-                    correct_place += 1
-                    counted[i] = 1
+                counted[i] = 1
+                guess_counted[i] = 1
         for i in range(4):
+            if guess_counted[i] != -1:
+                continue
             for j in range(4):
                 if patterns[round][i] == pattern[j]:
-                    if counted[j] == -1:
-                        correct_peg += 1
-                        counted[j] = 0
-                        break
+                    if counted[j] != -1:
+                        continue
+                    counted[j] = 0
+                    guess_counted[i] = 0
+                    break
 
-        if correct_place == 4:
+        if sum(counted) == 4:
             won = True
-        i = 0
         hints[round] = deepcopy(counted)
         hints[round].sort()
         hints[round].reverse()
@@ -175,6 +175,8 @@ def play():
     #for i in range(len(HINT_RECTS)):
     #    for r in HINT_RECTS[i]:
     #        pygame.draw.rect(screen,COLORS['LIGHT_GREY'],r)
+
+    pygame.display.update()
                     
 def choose_pattern():
     if players == 1:
@@ -188,20 +190,28 @@ def choose_pattern():
             
             if ev.type == pygame.MOUSEBUTTONUP:
                 pos = pygame.mouse.get_pos()
+    
+    pygame.display.update()
 
 def menu():
     # defining a font 
     title_font = pygame.font.SysFont('Consolas',75) 
-    button_font = pygame.font.SysFont('Consolas',50)
+    button_font = pygame.font.SysFont('Consolas',30)
+    button_font_larger = pygame.font.SysFont('Consolas',35)
     
     # rendering a text written in 
     # this font 
     mastermind_title = [title_font.render('MASTERMIND' , True , COLORS['BLACK']), title_font.render('MASTERMIND' , True , COLORS['WHITE'])]
     one_player_text = button_font.render('One Player' , True , COLORS['BLACK'])
+    one_player_text_larger = button_font_larger.render('One Player' , True , COLORS['BLACK'])
     two_player_text = button_font.render('Two Players' , True , COLORS['BLACK'])
+    two_player_text_larger = button_font_larger.render('Two Players' , True , COLORS['BLACK'])
+    quit_text = button_font.render('Quit' , True , COLORS['BLACK'])
+    quit_text_larger = button_font_larger.render('Quit' , True , COLORS['BLACK'])
 
-    one_player_rect = Rect((10,100),(200,80))
-    two_player_rect = Rect((10,200),(200,80))
+    one_player_rect = Rect((150,125),(200,100))
+    two_player_rect = Rect((150,275),(200,100))
+    quit_rect = Rect((150,800),(200,80))
 
     for ev in pygame.event.get():
           
@@ -211,11 +221,13 @@ def menu():
         if ev.type == pygame.MOUSEBUTTONUP:
             pos = pygame.mouse.get_pos()
             if one_player_rect.collidepoint(pos):
-                pygame.mixer.Sound.play(pygame.mixer.Sound("assets/button_press.wav"))
+                pygame.display.update()
                 return (1,1)
             elif two_player_rect.collidepoint(pos):
-                pygame.mixer.Sound.play(pygame.mixer.Sound("assets/button_press.wav"))
+                pygame.display.update()
                 return (2,1)
+            elif quit_rect.collidepoint(pos):
+                pygame.quit()
 
     screen.fill(COLORS['DARK_GREY'])
     screen.blit(mastermind_title[0],(44,14))
@@ -224,17 +236,81 @@ def menu():
     mouse = pygame.mouse.get_pos()
 
     if one_player_rect.collidepoint(mouse):
-        pygame.draw.rect(screen,COLORS['LIGHT_GREY'],one_player_rect)
+        pygame.draw.rect(screen,COLORS['LIGHT_GREY'],one_player_rect.inflate(10,10))
+        screen.blit(one_player_text_larger,(155,160))
     else:
         pygame.draw.rect(screen,COLORS['WHITE'],one_player_rect)
+        screen.blit(one_player_text,(170,160))
     if two_player_rect.collidepoint(mouse):
-        pygame.draw.rect(screen,COLORS['LIGHT_GREY'],two_player_rect)
+        pygame.draw.rect(screen,COLORS['LIGHT_GREY'],two_player_rect.inflate(10,10))
+        screen.blit(two_player_text_larger,(145,312))
     else:
         pygame.draw.rect(screen,COLORS['WHITE'],two_player_rect)
+        screen.blit(two_player_text,(157,312))
+    if quit_rect.collidepoint(mouse):
+        pygame.draw.rect(screen,COLORS['LIGHT_GREY'],quit_rect.inflate(10,10))
+        screen.blit(quit_text_larger,(210,825))
+    else:
+        pygame.draw.rect(screen,COLORS['WHITE'],quit_rect)
+        screen.blit(quit_text,(210,825))
 
+    pygame.display.update()
+    
     return (0,0)
 
-while True:  
+def play_again():
+
+    title_font = pygame.font.SysFont('Consolas',66)
+    yes_no_font = pygame.font.SysFont('Consolas',40)
+    play_again_text = title_font.render('Play Again?' , True , COLORS['BLACK'])
+    yes_text = yes_no_font.render('Yes' , True , COLORS['BLACK'])
+    no_text = yes_no_font.render('No' , True , COLORS['BLACK'])
+
+    play_again_rect = Rect((50,200),(400,200))
+    yes_rect = Rect((70,325),(150,60))
+    no_rect = Rect((275,325),(150,60))
+    pygame.draw.rect(screen,COLORS['LIGHT_GREY'],play_again_rect)
+    pygame.draw.rect(screen,COLORS['GREEN'],yes_rect)
+    pygame.draw.rect(screen,COLORS['RED'],no_rect)
+    screen.blit(play_again_text,(55,210))
+    screen.blit(yes_text,(110,337))
+    screen.blit(no_text,(328,340))
+    pygame.display.update()
+
+    for ev in pygame.event.get():
+          
+        if ev.type == pygame.QUIT: 
+            pygame.quit()
+        
+        if ev.type == pygame.MOUSEBUTTONUP:
+            pos = pygame.mouse.get_pos()
+            if yes_rect.collidepoint(pos):
+                return 1
+            elif no_rect.collidepoint(pos):
+                return 2
+    return 0
+
+def reset_vars():
+    global state
+    global players
+    global pattern
+    global patterns
+    global hints
+    global round
+    global pressed_tile
+    global verify
+    global won
+
+    state = 0
+    pattern = (-1,-1,-1,-1)
+    patterns = [[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1]]
+    hints = [[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1]]
+    round = 0
+    pressed_tile = (-1,-1)
+    verify = False
+    won = False
+
+while True:
     if state == 0:
         players,state = menu()
     elif state == 1:
@@ -243,7 +319,16 @@ while True:
     elif state == 2:
         play()
 
-    pygame.display.update()
     if won:
-        input()
-        pygame.quit()
+        while True:
+            again = play_again()
+            if again == 0:
+                continue
+            elif again == 1:
+                reset_vars()
+                state = 1
+                break
+            else:
+                reset_vars()
+                state = 0
+                break
