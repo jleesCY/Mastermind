@@ -242,8 +242,7 @@ while True:
         print(pattern)
     elif state == 2:
         play()
-      
-    # updates the frames of the game 
+
     pygame.display.update()
     if won:
         input()
