@@ -52,6 +52,10 @@ GUESS_RECTS = [ [Rect((125,120),(70,70)),Rect((220,120),(70,70)),Rect((315,120),
 ]
 CHECK_RECT = Rect((10,10),(80,80))
 
+PICK_RECTS = [Rect((20,125),(100,100)),Rect((140,125),(100,100)),Rect((260,125),(100,100)),Rect((380,125),(100,100))]
+
+SEL_PICK_RECTS = [Rect((20,255),(65,65)),Rect((99,255),(65,65)),Rect((178,255),(65,65)),Rect((257,255),(65,65)),Rect((338,255),(65,65)),Rect((415,255),(65,65))]
+
 HINT_RECTS = [  [Rect((20,127),(25,25)),Rect((50,127),(25,25)),Rect((20,158),(25,25)),Rect((50,158),(25,25))],
                 [Rect((20,217),(25,25)),Rect((50,217),(25,25)),Rect((20,248),(25,25)),Rect((50,248),(25,25))],
                 [Rect((20,307),(25,25)),Rect((50,307),(25,25)),Rect((20,338),(25,25)),Rect((50,338),(25,25))],
@@ -60,7 +64,6 @@ HINT_RECTS = [  [Rect((20,127),(25,25)),Rect((50,127),(25,25)),Rect((20,158),(25
                 [Rect((20,577),(25,25)),Rect((50,577),(25,25)),Rect((20,608),(25,25)),Rect((50,608),(25,25))],
                 [Rect((20,667),(25,25)),Rect((50,667),(25,25)),Rect((20,698),(25,25)),Rect((50,698),(25,25))],
                 [Rect((20,757),(25,25)),Rect((50,757),(25,25)),Rect((20,788),(25,25)),Rect((50,788),(25,25))],
-
 ]
 
 width = 500
@@ -69,13 +72,15 @@ res = (width,height)
 screen = pygame.display.set_mode(res)
 state = 0
 players = 0
-pattern = (-1,-1,-1,-1)
+pattern = [-1,-1,-1,-1]
 patterns = [[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1]]
 hints = [[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1]]
 round = 0
 pressed_tile = (-1,-1)
+picked_tile = -1
 verify = False
 won = False
+done = False
 button_press_sound = pygame.mixer.Sound('assets/button_press.wav') 
 peg_select_sound = pygame.mixer.Sound('assets/button_pop.wav') 
 check_press = pygame.mixer.Sound('assets/check_press.wav')
@@ -106,8 +111,8 @@ def play():
                     verify = True
             
             for i in range(4):
-                pygame.mixer.Sound.play(peg_select_sound)
                 if GUESS_RECTS[round][i].collidepoint(pos):
+                    pygame.mixer.Sound.play(peg_select_sound)
                     pressed_tile = (round,i)
             
             for i in range(6):
@@ -115,7 +120,6 @@ def play():
                     pygame.mixer.Sound.play(peg_select_sound)
                     if pressed_tile != (-1,-1):
                         patterns[round][pressed_tile[1]] = i
-                        pressed_tile = (-1,-1)
 
     for r in range(round+1):
         for i in range(len(GUESS_RECTS[r])):
@@ -158,8 +162,6 @@ def play():
         hints[round] = deepcopy(counted)
         hints[round].sort()
         hints[round].reverse()
-
-        print(hints[round])
         round += 1
         
 
@@ -182,12 +184,25 @@ def play():
     #        pygame.draw.rect(screen,COLORS['LIGHT_GREY'],r)
 
     pygame.display.update()
-                    
+       
 def choose_pattern():
+    global picked_tile
+    global pattern
+    global state
+    
     if players == 1:
         random.seed()
         return ((random.randint(0,5),random.randint(0,5),random.randint(0,5),random.randint(0,5)),2)
     else:
+        title_font = pygame.font.SysFont('Consolas',40)
+        pick_pattern_text = title_font.render('Choose a Pattern' , True , COLORS['BLACK'])
+        screen.fill(COLORS['DARK_GREY'])
+        pygame.draw.rect(screen,COLORS['LIGHT_GREY'],Rect((0,100),(width,7)))
+        pygame.draw.rect(screen,COLORS['LIGHT_GREY'],Rect((100,0),(7,101)))
+        screen.blit(pygame.transform.scale(CHECK_MARK,(80,80)),CHECK_RECT)
+        screen.blit(title_font.render('Choose a Pattern' , True , COLORS['BLACK']),(122,27))
+        screen.blit(title_font.render('Choose a Pattern' , True , COLORS['WHITE']),(120,25))
+
         for ev in pygame.event.get():
 
             if ev.type == pygame.QUIT: 
@@ -195,7 +210,33 @@ def choose_pattern():
             
             if ev.type == pygame.MOUSEBUTTONUP:
                 pos = pygame.mouse.get_pos()
-    
+                if CHECK_RECT.collidepoint(pos):
+                    pygame.mixer.Sound.play(check_press)
+                    if -1 not in pattern:
+                        state = 2
+                        return
+                    continue
+                for i in range(4):
+                    if PICK_RECTS[i].collidepoint(pos):
+                        pygame.mixer.Sound.play(peg_select_sound)
+                        picked_tile = i
+                for i in range(6):
+                    if SEL_PICK_RECTS[i].collidepoint(pos):
+                        pygame.mixer.Sound.play(peg_select_sound)
+                        if picked_tile != -1:
+                            pattern[picked_tile] = i
+        
+        for i in range(len(SEL_PICK_RECTS)):
+            screen.blit(pygame.transform.scale(PEGS_IMAGES[i],(65,65)),SEL_PICK_RECTS[i])
+        for i in range(len(PICK_RECTS)):
+            if i == picked_tile:
+                pygame.draw.rect(screen,COLORS['LIGHT_GREY'],PICK_RECTS[i].inflate(10,10))
+                pygame.draw.rect(screen,COLORS['DARK_GREY'],PICK_RECTS[i])
+            if pattern[i] == -1:
+                screen.blit(pygame.transform.scale(GREY_PEG,(100,100)), PICK_RECTS[i])
+            else:
+                screen.blit(pygame.transform.scale(PEGS_IMAGES[pattern[i]],(100,100)), PICK_RECTS[i])
+
     pygame.display.update()
 
 def menu():
@@ -267,7 +308,6 @@ def menu():
     return (0,0)
 
 def play_again():
-
     title_font = pygame.font.SysFont('Consolas',66)
     yes_no_font = pygame.font.SysFont('Consolas',40)
     play_again_text = title_font.render('Play Again?' , True , COLORS['BLACK'])
@@ -310,22 +350,25 @@ def reset_vars():
     global pressed_tile
     global verify
     global won
+    global done
+    global picked_tile
 
     state = 0
-    pattern = (-1,-1,-1,-1)
+    picked_tile = -1
+    pattern = [-1,-1,-1,-1]
     patterns = [[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1]]
     hints = [[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1],[-1,-1,-1,-1]]
     round = 0
     pressed_tile = (-1,-1)
     verify = False
     won = False
+    done = False
 
 while True:
     if state == 0:
         players,state = menu()
     elif state == 1:
-        pattern,state = choose_pattern()
-        print(pattern)
+        choose_pattern()
     elif state == 2:
         play()
 
