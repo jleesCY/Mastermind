@@ -76,6 +76,9 @@ round = 0
 pressed_tile = (-1,-1)
 verify = False
 won = False
+button_press_sound = pygame.mixer.Sound('assets/button_press.wav') 
+peg_select_sound = pygame.mixer.Sound('assets/button_pop.wav') 
+check_press = pygame.mixer.Sound('assets/check_press.wav')
 
 def play():
     global pressed_tile
@@ -98,16 +101,18 @@ def play():
         if ev.type == pygame.MOUSEBUTTONUP:
             pos = pygame.mouse.get_pos()
             if CHECK_RECT.collidepoint(pos):
+                pygame.mixer.Sound.play(check_press)
                 if -1 not in patterns[round]:
-                    print('verify')
                     verify = True
             
             for i in range(4):
+                pygame.mixer.Sound.play(peg_select_sound)
                 if GUESS_RECTS[round][i].collidepoint(pos):
                     pressed_tile = (round,i)
             
             for i in range(6):
                 if SEL_RECTS[i].collidepoint(pos):
+                    pygame.mixer.Sound.play(peg_select_sound)
                     if pressed_tile != (-1,-1):
                         patterns[round][pressed_tile[1]] = i
                         pressed_tile = (-1,-1)
@@ -221,12 +226,15 @@ def menu():
         if ev.type == pygame.MOUSEBUTTONUP:
             pos = pygame.mouse.get_pos()
             if one_player_rect.collidepoint(pos):
+                pygame.mixer.Sound.play(button_press_sound)
                 pygame.display.update()
                 return (1,1)
             elif two_player_rect.collidepoint(pos):
+                pygame.mixer.Sound.play(button_press_sound)
                 pygame.display.update()
                 return (2,1)
             elif quit_rect.collidepoint(pos):
+                pygame.mixer.Sound.play(button_press_sound)
                 pygame.quit()
 
     screen.fill(COLORS['DARK_GREY'])
@@ -285,8 +293,10 @@ def play_again():
         if ev.type == pygame.MOUSEBUTTONUP:
             pos = pygame.mouse.get_pos()
             if yes_rect.collidepoint(pos):
+                pygame.mixer.Sound.play(button_press_sound)
                 return 1
             elif no_rect.collidepoint(pos):
+                pygame.mixer.Sound.play(button_press_sound)
                 return 2
     return 0
 
