@@ -192,16 +192,23 @@ def choose_pattern():
     
     if players == 1:
         random.seed()
-        return ((random.randint(0,5),random.randint(0,5),random.randint(0,5),random.randint(0,5)),2)
+        state = 2
+        pattern = (random.randint(0,5),random.randint(0,5),random.randint(0,5),random.randint(0,5))
+        return
     else:
         title_font = pygame.font.SysFont('Consolas',40)
-        pick_pattern_text = title_font.render('Choose a Pattern' , True , COLORS['BLACK'])
         screen.fill(COLORS['DARK_GREY'])
+        back_rect = Rect((150,800),(200,80))
         pygame.draw.rect(screen,COLORS['LIGHT_GREY'],Rect((0,100),(width,7)))
         pygame.draw.rect(screen,COLORS['LIGHT_GREY'],Rect((100,0),(7,101)))
+        pygame.draw.rect(screen,COLORS['WHITE'],back_rect)
         screen.blit(pygame.transform.scale(CHECK_MARK,(80,80)),CHECK_RECT)
         screen.blit(title_font.render('Choose a Pattern' , True , COLORS['BLACK']),(122,27))
         screen.blit(title_font.render('Choose a Pattern' , True , COLORS['WHITE']),(120,25))
+        button_font = pygame.font.SysFont('Consolas',30)
+        button_font_larger = pygame.font.SysFont('Consolas',35)
+        back_text = button_font.render('Back' , True , COLORS['BLACK'])
+        back_text_larger = button_font_larger.render('Back' , True , COLORS['BLACK'])
 
         for ev in pygame.event.get():
 
@@ -216,6 +223,10 @@ def choose_pattern():
                         state = 2
                         return
                     continue
+                if back_rect.collidepoint(pos):
+                    pygame.mixer.Sound.play(button_press_sound)
+                    state = 0
+                    return
                 for i in range(4):
                     if PICK_RECTS[i].collidepoint(pos):
                         pygame.mixer.Sound.play(peg_select_sound)
@@ -236,6 +247,14 @@ def choose_pattern():
                 screen.blit(pygame.transform.scale(GREY_PEG,(100,100)), PICK_RECTS[i])
             else:
                 screen.blit(pygame.transform.scale(PEGS_IMAGES[pattern[i]],(100,100)), PICK_RECTS[i])
+
+        mouse = pygame.mouse.get_pos()
+        if back_rect.collidepoint(mouse):
+            pygame.draw.rect(screen,COLORS['LIGHT_GREY'],back_rect.inflate(10,10))
+            screen.blit(back_text_larger,(210,825))
+        else:
+            pygame.draw.rect(screen,COLORS['WHITE'],back_rect)
+            screen.blit(back_text,(210,825))
 
     pygame.display.update()
 
