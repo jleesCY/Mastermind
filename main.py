@@ -33,8 +33,14 @@ PEGS_IMAGES = [
 
 HINT_PEGS_IMAGES = [
     pygame.image.load('assets/white_circle.png'),
-    pygame.image.load('assets/dark_red_circle.png')
-    
+    pygame.image.load('assets/dark_red_circle.png')    
+]
+
+SOUND_CONTROL_IMAGES = [    
+    pygame.image.load('assets/music_note.png'),
+    pygame.image.load('assets/music_note_NO.png'),
+    pygame.image.load('assets/speaker.png'),
+    pygame.image.load('assets/speaker_NO.png'),
 ]
 
 GREY_PEG = pygame.image.load('assets/grey_circle.png')
@@ -55,6 +61,9 @@ GUESS_RECTS = [ [Rect((125,120),(70,70)),Rect((220,120),(70,70)),Rect((315,120),
 CHECK_RECT = Rect((10,10),(80,80))
 
 LOGO_RECT = Rect((43,10),(410,60))
+
+NOTE_RECT = Rect((95,835),(70,70))
+SPEAKER_RECT = Rect((10,835),(70,70))
 
 PICK_RECTS = [Rect((20,125),(100,100)),Rect((140,125),(100,100)),Rect((260,125),(100,100)),Rect((380,125),(100,100))]
 
@@ -85,6 +94,8 @@ picked_tile = -1
 verify = False
 won = False
 done = False
+all_sound = True
+all_music = True
 button_press_sound = pygame.mixer.Sound('assets/button_press.wav') 
 peg_select_sound = pygame.mixer.Sound('assets/button_pop.wav') 
 check_press = pygame.mixer.Sound('assets/check_press.wav')
@@ -94,11 +105,14 @@ menu_sound = pygame.mixer.Sound('assets/main_menu.wav')
 playing_sound = pygame.mixer.Sound('assets/playing.wav')
 
 menu_music = pygame.mixer.Channel(1)
-menu_music.set_volume(0.75)
+menu_vol = 0.75
+menu_music.set_volume(menu_vol)
 fx = pygame.mixer.Channel(2)
-fx.set_volume(0.9)
+fx_vol = 0.9
+fx.set_volume(fx_vol)
 play_music = pygame.mixer.Channel(3)
-play_music.set_volume(0.25)
+play_vol = 0.25
+play_music.set_volume(play_vol)
 
 def play():
 
@@ -213,6 +227,10 @@ def choose_pattern():
     global picked_tile
     global pattern
     global state
+
+    play_music.stop()
+    if not menu_music.get_busy():
+        menu_music.play(menu_sound)
     
     if players == 1:
         random.seed()
@@ -284,6 +302,9 @@ def choose_pattern():
 
 def menu():
 
+    global all_sound
+    global all_music
+
     mouse = pygame.mouse.get_pos()
 
     play_music.stop()
@@ -307,7 +328,7 @@ def menu():
 
     one_player_rect = Rect((150,125),(200,100))
     two_player_rect = Rect((150,275),(200,100))
-    quit_rect = Rect((150,800),(200,80))
+    quit_rect = Rect((195,800),(100,80))
 
     for ev in pygame.event.get():
           
@@ -327,6 +348,12 @@ def menu():
             elif quit_rect.collidepoint(pos):
                 fx.play(button_press_sound)
                 pygame.quit()
+            elif NOTE_RECT.collidepoint(pos):
+                if all_sound:
+                    all_music = not all_music
+            elif SPEAKER_RECT.collidepoint(pos):
+                all_sound = not all_sound
+                all_music = all_sound
 
     if LOGO_RECT.collidepoint(mouse):
         screen.fill((random.randint(0,255),random.randint(0,255),random.randint(0,255)))
@@ -355,6 +382,27 @@ def menu():
     else:
         pygame.draw.rect(screen,COLORS['WHITE'],quit_rect)
         screen.blit(quit_text,(210,825))
+
+    if all_sound:
+        if all_music:
+            play_music.set_volume(play_vol)
+            menu_music.set_volume(menu_vol)
+            fx.set_volume(fx_vol)
+            screen.blit(pygame.transform.scale(SOUND_CONTROL_IMAGES[0],(70,70)), NOTE_RECT)
+            screen.blit(pygame.transform.scale(SOUND_CONTROL_IMAGES[2],(70,70)), SPEAKER_RECT)
+        else:
+            play_music.set_volume(0)
+            menu_music.set_volume(0)
+            fx.set_volume(fx_vol)
+            screen.blit(pygame.transform.scale(SOUND_CONTROL_IMAGES[1],(70,70)), NOTE_RECT)
+            screen.blit(pygame.transform.scale(SOUND_CONTROL_IMAGES[2],(70,70)), SPEAKER_RECT)
+    else:
+        play_music.set_volume(0)
+        menu_music.set_volume(0)
+        fx.set_volume(0)
+        screen.blit(pygame.transform.scale(SOUND_CONTROL_IMAGES[1],(70,70)), NOTE_RECT)
+        screen.blit(pygame.transform.scale(SOUND_CONTROL_IMAGES[3],(70,70)), SPEAKER_RECT)
+
 
     pygame.display.update()
     
