@@ -2,8 +2,10 @@ import pygame
 from pygame.locals import *
 from copy import deepcopy
 import random 
+from assets import *
 
 pygame.init()
+pygame.mixer.init()
 
 pygame.display.set_caption('Mastermind')
 
@@ -52,6 +54,8 @@ GUESS_RECTS = [ [Rect((125,120),(70,70)),Rect((220,120),(70,70)),Rect((315,120),
 ]
 CHECK_RECT = Rect((10,10),(80,80))
 
+LOGO_RECT = Rect((43,10),(410,60))
+
 PICK_RECTS = [Rect((20,125),(100,100)),Rect((140,125),(100,100)),Rect((260,125),(100,100)),Rect((380,125),(100,100))]
 
 SEL_PICK_RECTS = [Rect((20,255),(65,65)),Rect((99,255),(65,65)),Rect((178,255),(65,65)),Rect((257,255),(65,65)),Rect((338,255),(65,65)),Rect((415,255),(65,65))]
@@ -84,8 +88,24 @@ done = False
 button_press_sound = pygame.mixer.Sound('assets/button_press.wav') 
 peg_select_sound = pygame.mixer.Sound('assets/button_pop.wav') 
 check_press = pygame.mixer.Sound('assets/check_press.wav')
+won_sound = pygame.mixer.Sound('assets/won_game.wav')
+lost_sound = pygame.mixer.Sound('assets/lost_game.wav')
+menu_sound = pygame.mixer.Sound('assets/main_menu.wav')
+playing_sound = pygame.mixer.Sound('assets/playing.wav')
+
+menu_music = pygame.mixer.Channel(1)
+menu_music.set_volume(0.75)
+fx = pygame.mixer.Channel(2)
+fx.set_volume(0.9)
+play_music = pygame.mixer.Channel(3)
+play_music.set_volume(0.25)
 
 def play():
+
+    menu_music.stop()
+    if not play_music.get_busy():
+        play_music.play(playing_sound)
+
     global pressed_tile
     global round
     global patterns
@@ -106,18 +126,18 @@ def play():
         if ev.type == pygame.MOUSEBUTTONUP:
             pos = pygame.mouse.get_pos()
             if CHECK_RECT.collidepoint(pos):
-                pygame.mixer.Sound.play(check_press)
+                fx.play(check_press)
                 if -1 not in patterns[round]:
                     verify = True
             
             for i in range(4):
                 if GUESS_RECTS[round][i].collidepoint(pos):
-                    pygame.mixer.Sound.play(peg_select_sound)
+                    fx.play(peg_select_sound)
                     pressed_tile = (round,i)
             
             for i in range(6):
                 if SEL_RECTS[i].collidepoint(pos):
-                    pygame.mixer.Sound.play(peg_select_sound)
+                    fx.play(peg_select_sound)
                     if pressed_tile != (-1,-1):
                         patterns[round][pressed_tile[1]] = i
 
@@ -168,6 +188,10 @@ def play():
     if won or round == 8:
         for i in range(4):
             screen.blit(pygame.transform.scale(PEGS_IMAGES[pattern[i]],(70,70)), ANS_RECTS[i])
+        if won:
+            fx.play(won_sound)
+        else:
+            fx.play(lost_sound)
         won = True
     
     # show RECTS
@@ -218,22 +242,22 @@ def choose_pattern():
             if ev.type == pygame.MOUSEBUTTONUP:
                 pos = pygame.mouse.get_pos()
                 if CHECK_RECT.collidepoint(pos):
-                    pygame.mixer.Sound.play(check_press)
+                    fx.play(check_press)
                     if -1 not in pattern:
                         state = 2
                         return
                     continue
                 if back_rect.collidepoint(pos):
-                    pygame.mixer.Sound.play(button_press_sound)
+                    fx.play(button_press_sound)
                     state = 0
                     return
                 for i in range(4):
                     if PICK_RECTS[i].collidepoint(pos):
-                        pygame.mixer.Sound.play(peg_select_sound)
+                        fx.play(peg_select_sound)
                         picked_tile = i
                 for i in range(6):
                     if SEL_PICK_RECTS[i].collidepoint(pos):
-                        pygame.mixer.Sound.play(peg_select_sound)
+                        fx.play(peg_select_sound)
                         if picked_tile != -1:
                             pattern[picked_tile] = i
         
@@ -259,6 +283,13 @@ def choose_pattern():
     pygame.display.update()
 
 def menu():
+
+    mouse = pygame.mouse.get_pos()
+
+    play_music.stop()
+    if not menu_music.get_busy():
+        menu_music.play(menu_sound)
+
     # defining a font 
     title_font = pygame.font.SysFont('Consolas',75) 
     button_font = pygame.font.SysFont('Consolas',30)
@@ -286,22 +317,25 @@ def menu():
         if ev.type == pygame.MOUSEBUTTONUP:
             pos = pygame.mouse.get_pos()
             if one_player_rect.collidepoint(pos):
-                pygame.mixer.Sound.play(button_press_sound)
+                fx.play(button_press_sound)
                 pygame.display.update()
                 return (1,1)
             elif two_player_rect.collidepoint(pos):
-                pygame.mixer.Sound.play(button_press_sound)
+                fx.play(button_press_sound)
                 pygame.display.update()
                 return (2,1)
             elif quit_rect.collidepoint(pos):
-                pygame.mixer.Sound.play(button_press_sound)
+                fx.play(button_press_sound)
                 pygame.quit()
 
-    screen.fill(COLORS['DARK_GREY'])
-    screen.blit(mastermind_title[0],(44,14))
-    screen.blit(mastermind_title[1],(40,10))
-
-    mouse = pygame.mouse.get_pos()
+    if LOGO_RECT.collidepoint(mouse):
+        screen.fill((random.randint(0,255),random.randint(0,255),random.randint(0,255)))
+        screen.blit(mastermind_title[0],(44,14))
+        screen.blit(title_font.render('MASTERMIND' , True , (random.randint(0,255),random.randint(0,255),random.randint(0,255))),(40,10))
+    else:
+        screen.fill(COLORS['DARK_GREY'])
+        screen.blit(mastermind_title[0],(44,14))
+        screen.blit(mastermind_title[1],(40,10))
 
     if one_player_rect.collidepoint(mouse):
         pygame.draw.rect(screen,COLORS['LIGHT_GREY'],one_player_rect.inflate(10,10))
@@ -327,6 +361,11 @@ def menu():
     return (0,0)
 
 def play_again():
+
+    menu_music.stop()
+    if not play_music.get_busy():
+        play_music.play(playing_sound)
+
     title_font = pygame.font.SysFont('Consolas',66)
     yes_no_font = pygame.font.SysFont('Consolas',40)
     play_again_text = title_font.render('Play Again?' , True , COLORS['BLACK'])
@@ -352,10 +391,10 @@ def play_again():
         if ev.type == pygame.MOUSEBUTTONUP:
             pos = pygame.mouse.get_pos()
             if yes_rect.collidepoint(pos):
-                pygame.mixer.Sound.play(button_press_sound)
+                fx.play(button_press_sound)
                 return 1
             elif no_rect.collidepoint(pos):
-                pygame.mixer.Sound.play(button_press_sound)
+                fx.play(button_press_sound)
                 return 2
     return 0
 
