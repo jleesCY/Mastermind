@@ -7,6 +7,8 @@ from assets import *
 pygame.init()
 pygame.mixer.init()
 
+clock = pygame.time.Clock()
+
 pygame.display.set_caption('Mastermind')
 
 COLORS = {
@@ -491,3 +493,4 @@ while True:
                 reset_vars()
                 state = 0
                 break
+    clock.tick(30)
